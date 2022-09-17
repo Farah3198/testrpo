@@ -15,94 +15,73 @@ from datetime import datetime
 
 tmpfile    = "temp.tmp"               
 logfile    = "logfile.txt"            
-targetfile = "exchange_rates.csv"   
+targetfile = "bank_market_cap_1.json"    
 
 
 # In[28]:
 
-
-df = pd.read_csv("exchange_rates.csv")
+def extract_from_json(file_to_process):
+    dataframe = pd.read_json(file_to_process)
+    return dataframe
 
 
 # In[29]:
 
 
-df
+columns=['Name','Market Cap (US$ Billion)']
 
 
 # In[30]:
 
-
-exchange_rate = df._get_value(9,'Rates')
+def extract():
+   
+    extracted_data = pd.DataFrame(columns=['Name','Market Cap (US$ Billion)'])
+    
+   
+    for jsonfile in glob.glob("bank_market_cap_1.json"):
+        extracted_data = extracted_data.append(extract_from_json(jsonfile), ignore_index=True)
+        
+    return extracted_data
 
 
 # In[31]:
 
 
-exchange_rate
+
+
+extracted_data = extract()
+
+extracted_data.head()
 
 
 # In[35]:
 
 
-def extract_from_csv(file_to_process):
-    dataframe = pd.read_csv(file_to_process)
-    return dataframe
+
+def transform(data):
+    # Write your code here
+    data['Market Cap (US$ Billion)'] = round(0.732 * data['Market Cap (US$ Billion)'], 3)
+    data.rename(columns={'Market Cap (US$ Billion)': 'Market Cap (GBP$ Billion)'}, inplace=True)
+    return data
+
+transformed_data = transform(extracted_data)
+transformed_data.head
 
 
 # In[36]:
 
 
-columns=['Rates','Currencey']
+def load(target_file, data_to_load):
+
+    data_to_load.to_csv(target_file, index=False) 
 
 
 # In[37]:
 
 
-def extract():
-    extracted_data = pd.DataFrame(columns=['Rates'])
-    
-    #process all csv files
-    for csvfile in glob.glob("exchange_rates.csv"):
-        extracted_data = extracted_data.append(extract_from_csv(csvfile), ignore_index=True)
-        return extracted_data
-
-
-# In[38]:
-
-
-extracted_data = extract()
-extracted_data.head()
-
-
-# In[39]:
-
-
-def transform(data):
-    # Write your code here
-    data['Rates'] = round(0.75 * data['Rates'], 3)
-    return data
-
-
-# In[40]:
-
-
-Transformed_data = transform(extracted_data)
-Transformed_data.head()
-
-
-# In[41]:
-
-
-def load(target_file, data_to_load):
-    # Write your code here
-    data_to_load.to_csv(target_file, index=False) 
-
-
-# In[42]:
-
 
 def log(message):
+
     timestamp_format = '%Y-%h-%d-%H:%M:%S' # Year-Monthname-Day-Hour-Minute-Second
     now = datetime.now() # get current timestamp
     timestamp = now.strftime(timestamp_format)
@@ -110,7 +89,7 @@ def log(message):
         f.write(timestamp + ',' + message + '\n')
 
 
-# In[43]:
+# In[38]:
 
 
 log("ETL Job Started")
@@ -127,8 +106,6 @@ load(targetfile,transformed_data)
 log("Load phase Ended")
 log("ETL Job Ended")
 
-
-# In[ ]:
 
 
 
